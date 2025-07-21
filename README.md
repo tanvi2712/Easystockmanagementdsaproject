@@ -1,87 +1,75 @@
+# Stock Management System (Mini DSA Project)
 
-# Stock Management and Prediction System
-
-## Project Overview
-This project implements a **Stock Management System** that helps users organize and analyze stocks based on their daily percentage change in value. It provides functionality for stock initialization, sorting, analysis, and basic portfolio management, aiming to offer insights into stock market trends.
-
----
+This is a Java-based command-line application to manage and analyze stock data using core Data Structures & Algorithms concepts such as arrays, sorting, greedy strategy, and the Simple Moving Average (SMA). It is intended to demonstrate practical DSA usage in a real-world scenario.
 
 ## Features
-1. **Stock Initialization**  
-   - Create a queue of stocks, each with:
-     - `name`: The company's name.
-     - `symbol`: The stock ticker symbol.
-     - `price`: The current price of the stock.
-     - `changePercent`: The stock's daily percentage change.
-   
-2. **Sorting by Percentage Change**  
-   - Sort stocks in ascending order of their percentage change, helping users assess performance effectively.
 
-3. **Portfolio Management**  
-   - Sign up and log in as a user.
-   - View portfolio details, including owned stocks, quantity, and cash balance.
-   - Buy and sell stocks dynamically.
+- Fetch historical stock prices using the Alpha Vantage API  
+- Display all closing prices  
+- Retrieve the stock price on a specific date  
+- Calculate the Simple Moving Average (SMA) over n days  
+- Find the Top K Closing Prices  
+- Analyze the best buy/sell days using a greedy approach to maximize profit based on historical data  
 
-4. **Moving Average Analysis**  
-   - Calculate Simple Moving Averages (SMA) for different periods.
-   - Identify bullish or bearish trends using crossover strategies.
+## Algorithms and DSA Concepts Used
 
-5. **Dynamic User Interface**  
-   - Intuitive text-based menus for login, stock analysis, and portfolio management.
+- **Greedy Algorithm** for maximum profit buy/sell analysis  
+- **Sorting** for identifying Top K prices  
+- **Sliding Window Technique** for SMA calculation  
+- **Array Traversal** and date handling using Java collections and string manipulation  
 
----
+## How to Run
 
-## Technologies Used
-- **Programming Language**: Java  
-- **Data Structures**:  
-  - Queue (for managing stock data).
-  - ArrayList and HashMap (for user portfolio and historical stock prices).
+1. Clone this repository  
+2. Obtain a free API key from [Alpha Vantage](https://www.alphavantage.co/support/#api-key)  
+3. Compile and run the Java program:
 
----
+```bash
+javac StockManagement.java
+java StockManagement
+```
 
-## System Requirements
-- **Java Version**: JDK 8 or above.
-- **Development Environment**: IntelliJ IDEA, Eclipse, or any Java-compatible IDE.
+4. Enter the stock symbol when prompted (e.g., AAPL, GOOG, TCS.BSE)
 
----
+## Sample Output
 
-## Setup Instructions
-1. Clone the repository:
-   ```bash
-   git clone <repository_url>
-   ```
-2. Open the project in your Java IDE.
-3. Compile and run the `StockManagement` class.
+```
+Enter stock symbol (e.g., AAPL): AAPL
 
----
+Historical Closing Prices:
+2024-01-10: 142.88
+2024-01-11: 145.76
+...
 
-## How to Use
-### Login Menu
-1. **Sign Up**  
-   - Enter your name, a 4-digit account number, a unique user ID, and password.  
-   - Provide an initial cash balance.
+Simple Moving Average (SMA) over 5 days: 150.62
 
-2. **Login**  
-   - Use your user ID and password to log in.
+Top 3 Closing Prices:
+1. 157.23
+2. 154.80
+3. 151.34
 
-3. **Exit**  
-   - Quit the application.
+Best Buy/Sell Analysis (Historical Data Only):
+Buy on 2024-01-10 at $142.88
+Sell on 2024-01-23 at $157.23
+Max Profit: $14.35
+Note: This analysis is based on past data and does not predict future performance.
+```
 
-### User Menu
-1. **View Stock Data**  
-   - Displays all available stocks with their details.
-   
-2. **Buy Stock**  
-   - Purchase stocks by specifying their name and quantity.
+## What is SMA?
 
-3. **Sell Stock**  
-   - Sell owned stocks by providing their name and the number of shares.
+The Simple Moving Average (SMA) is the average of the last 'n' closing prices. It helps smooth out short-term fluctuations and observe long-term trends in the stock's behavior.
 
-4. **View Portfolio**  
-   - Check your portfolio details, including cash balance, total invested amount, and stock holdings.
+For example, SMA(3) = (Price1 + Price2 + Price3) / 3
 
-5. **View Moving Averages**  
-   - Calculate and analyze short-term and long-term SMAs for any stock.
 
-6. **Sort by Percent Change**  
-   - Display stocks sorted by daily percentage change
+## Future Improvements
+
+- Add basic price prediction using regression or ML  
+- Export results to CSV  
+- Add a user-friendly GUI using JavaFX or Swing  
+
+## Credits
+
+Developed using Java and Alpha Vantage API for historical stock data.
+
+
