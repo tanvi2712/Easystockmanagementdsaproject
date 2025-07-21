@@ -1,566 +1,226 @@
 package minidsaproject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
+import org.json.JSONObject;
+
 class Stock {
-String name;
-String symbol;
-double price;
-double changePercent;
-List<Double> priceHistory = new ArrayList<>(); // To store historical prices
-// Constructor to initialize stock
-Stock(String name, String symbol, double price, 
-double changePercent) {
-this.name = name;
-this.symbol = symbol;
-this.price = price;
-this.changePercent = changePercent;
+    private String symbol;
+    private Map<String, Double> dailyPrices;
+
+    public Stock(String symbol) {
+        this.symbol = symbol;
+        this.dailyPrices = new LinkedHashMap<>();
+    }
+
+    public String getSymbol() {
+        return symbol;
+    }
+
+    public Map<String, Double> getDailyPrices() {
+        return dailyPrices;
+    }
+
+    public void setDailyPrices(Map<String, Double> dailyPrices) {
+        this.dailyPrices = dailyPrices;
+    }
+
+    public void displayPrices() {
+        System.out.println("\n📊 Stock Prices for " + symbol + ":\n");
+        for (Map.Entry<String, Double> entry : dailyPrices.entrySet()) {
+            System.out.println("Date: " + entry.getKey() + ", Close Price: $" + entry.getValue());
+        }
+    }
+
+    // SMA using Sliding Window
+    public List<Double> calculateSimpleMovingAverage(int period) {
+        List<Double> prices = new ArrayList<>(dailyPrices.values());
+        List<Double> smaList = new ArrayList<>();
+
+        if (prices.size() < period) {
+            System.out.println("Not enough data to calculate SMA for period " + period);
+            return smaList;
+        }
+
+        double sum = 0;
+        for (int i = 0; i < prices.size(); i++) {
+            sum += prices.get(i);
+            if (i >= period) sum -= prices.get(i - period);
+            if (i >= period - 1) smaList.add(sum / period);
+        }
+
+        return smaList;
+    }
+
+    //  Max Heap for Top K prices
+    public List<Double> getTopKClosingPrices(int k) {
+        PriorityQueue<Double> maxHeap = new PriorityQueue<>(Collections.reverseOrder());
+        maxHeap.addAll(dailyPrices.values());
+
+        List<Double> topPrices = new ArrayList<>();
+        for (int i = 0; i < k && !maxHeap.isEmpty(); i++) {
+            topPrices.add(maxHeap.poll());
+        }
+        return topPrices;
+    }
+
+    // Greedy Algorithm for Best Buy/Sell
+    public void bestDayToBuyAndSell() {
+        List<String> dates = new ArrayList<>(dailyPrices.keySet());
+        List<Double> prices = new ArrayList<>(dailyPrices.values());
+
+        if (prices.size() < 2) {
+            System.out.println("Not enough data to determine buy/sell days.");
+            return;
+        }
+
+        double minPrice = prices.get(0);
+        int minDay = 0;
+        double maxProfit = 0;
+        int buyDay = 0, sellDay = 0;
+
+        for (int i = 1; i < prices.size(); i++) {
+            double profit = prices.get(i) - minPrice;
+            if (profit > maxProfit) {
+                maxProfit = profit;
+                buyDay = minDay;
+                sellDay = i;
+            }
+
+            if (prices.get(i) < minPrice) {
+                minPrice = prices.get(i);
+                minDay = i;
+            }
+        }
+
+        if (maxProfit <= 0) {
+            System.out.println("No profit opportunity. Prices are decreasing.");
+        } else {
+            System.out.println("\n💰 Best Buy/Sell Strategy (Greedy Approach):");
+            System.out.println("Buy on " + dates.get(buyDay) + " at $" + prices.get(buyDay));
+            System.out.println("Sell on " + dates.get(sellDay) + " at $" + prices.get(sellDay));
+            System.out.printf("Max Profit = $%.2f\n", maxProfit);
+        }
+    }
 }
-// Add price to history
-void addPriceToHistory(double price) {
-priceHistory.add(price);
-}
-// Calculate Simple Moving Average for the given period
-double calculateSMA(int period) {
-int size = priceHistory.size();
-if (size < period) return 0; // Not enough data to calculate SMA
-double sum = 0;
-for (int i = size - period; i < size; i++) {
-sum += priceHistory.get(i);
-}
-return sum / period;
-}
-}
-class User {
-String name;
-String accountNo;
-String userId;
-String password;
-double cashBalance;
-Map<String, Integer> portfolio = new HashMap<>();
-double totalInvested = 0.0;
-// Constructor to initialize the user
-User(String name, String accountNo, String userId, 
-String password, double cashBalance) {
-this.name = name;
-this.accountNo = accountNo;
-this.userId = userId;
-this.password = password;
-this.cashBalance = cashBalance;
-}
-}
-class StockManagment {
-static Queue<Stock> stockQueue = new LinkedList<>();
-static List<User> users = new ArrayList<>();
-static Scanner sc = new Scanner(System.in);
-static User loggedInUser = null;
-public static void main(String[] args) {
-initializeStocks();
-while (true) {
-if (loggedInUser == null) {
-loginMenu();
-} else {
-userMenu();
-}
-}
-}
-static void initializeStocks() {
-// Initializing 10 companies with stock data
-stockQueue.offer(new Stock("Apple", "AAPL", 160.0, 
-5.0));
-stockQueue.offer(new Stock("Microsoft", "MSFT", 
-300.0, 2.5));
-stockQueue.offer(new Stock("Google", "GOOGL", 2800.0, 
-3.5));
-stockQueue.offer(new Stock("Amazon", "AMZN", 3300.0, 
-2.0));
-stockQueue.offer(new Stock("Facebook", "FB", 270.0, 
-1.5));
-stockQueue.offer(new Stock("Tesla", "TSLA", 800.0, 
-4.8));
-// Adding historical prices for stocks
-stockQueue.forEach(stock -> {
-if (stock.symbol.equalsIgnoreCase("AAPL")) {
-stock.addPriceToHistory(150.0);
-stock.addPriceToHistory(151.0);
-stock.addPriceToHistory(152.0);
-stock.addPriceToHistory(149.0);
-stock.addPriceToHistory(153.0);
-stock.addPriceToHistory(154.0);
-stock.addPriceToHistory(155.0);
-stock.addPriceToHistory(156.0);
-stock.addPriceToHistory(157.0);
-stock.addPriceToHistory(158.0);
-stock.addPriceToHistory(159.0);
-stock.addPriceToHistory(160.0);
-stock.addPriceToHistory(158.0);
-stock.addPriceToHistory(157.0);
-stock.addPriceToHistory(156.0);
-stock.addPriceToHistory(155.0);
-stock.addPriceToHistory(154.0);
-stock.addPriceToHistory(153.0);
-stock.addPriceToHistory(152.0);
-stock.addPriceToHistory(151.0);
-stock.addPriceToHistory(150.0);
-stock.addPriceToHistory(149.0);
-stock.addPriceToHistory(151.0);
-stock.addPriceToHistory(152.0);
-stock.addPriceToHistory(154.0);
-stock.addPriceToHistory(156.0);
-stock.addPriceToHistory(158.0);
-stock.addPriceToHistory(160.0);
-stock.addPriceToHistory(159.0);
-stock.addPriceToHistory(161.0);
-}
-else if (stock.symbol.equalsIgnoreCase("MSFT")) {
-stock.addPriceToHistory(302.0);
-stock.addPriceToHistory(305.0);
-stock.addPriceToHistory(308.0);
-stock.addPriceToHistory(310.0);
-stock.addPriceToHistory(312.0);
-stock.addPriceToHistory(315.0);
-stock.addPriceToHistory(317.0);
-stock.addPriceToHistory(318.0);
-stock.addPriceToHistory(319.0);
-stock.addPriceToHistory(320.0);
-stock.addPriceToHistory(318.0);
-stock.addPriceToHistory(316.0);
-stock.addPriceToHistory(314.0);
-stock.addPriceToHistory(312.0);
-stock.addPriceToHistory(310.0);
-stock.addPriceToHistory(308.0);
-stock.addPriceToHistory(306.0);
-stock.addPriceToHistory(307.0);
-stock.addPriceToHistory(309.0);
-stock.addPriceToHistory(311.0);
-stock.addPriceToHistory(314.0);
-stock.addPriceToHistory(316.0);
-stock.addPriceToHistory(318.0);
-stock.addPriceToHistory(319.0);
-stock.addPriceToHistory(321.0);
-stock.addPriceToHistory(322.0);
-stock.addPriceToHistory(324.0);
-stock.addPriceToHistory(323.0);
-stock.addPriceToHistory(325.0);
-stock.addPriceToHistory(327.0);
-}
-else if (stock.symbol.equalsIgnoreCase("GOOGL")) {
-stock.addPriceToHistory(2780.0);
-stock.addPriceToHistory(2790.0);
-stock.addPriceToHistory(2800.0);
-stock.addPriceToHistory(2815.0);
-stock.addPriceToHistory(2830.0);
-stock.addPriceToHistory(2845.0);
-stock.addPriceToHistory(2860.0);
-stock.addPriceToHistory(2855.0);
-stock.addPriceToHistory(2840.0);
-stock.addPriceToHistory(2825.0);
-stock.addPriceToHistory(2810.0);
-stock.addPriceToHistory(2805.0);
-stock.addPriceToHistory(2795.0);
-stock.addPriceToHistory(2785.0);
-stock.addPriceToHistory(2770.0);
-stock.addPriceToHistory(2780.0);
-stock.addPriceToHistory(2790.0);
-stock.addPriceToHistory(2800.0);
-stock.addPriceToHistory(2810.0);
-stock.addPriceToHistory(2820.0);
-stock.addPriceToHistory(2835.0);
-stock.addPriceToHistory(2845.0);
-stock.addPriceToHistory(2850.0);
-stock.addPriceToHistory(2865.0);
-stock.addPriceToHistory(2870.0);
-stock.addPriceToHistory(2855.0);
-stock.addPriceToHistory(2840.0);
-stock.addPriceToHistory(2830.0);
-stock.addPriceToHistory(2820.0);
-stock.addPriceToHistory(2800.0);
-}
-else if (stock.symbol.equalsIgnoreCase("AMZN"))
-{
-stock.addPriceToHistory(3250.0);
-stock.addPriceToHistory(3260.0);
-stock.addPriceToHistory(3275.0);
-stock.addPriceToHistory(3290.0);
-stock.addPriceToHistory(3305.0);
-stock.addPriceToHistory(3320.0);
-stock.addPriceToHistory(3315.0);
-stock.addPriceToHistory(3300.0);
-stock.addPriceToHistory(3285.0);
-stock.addPriceToHistory(3270.0);
-stock.addPriceToHistory(3255.0);
-stock.addPriceToHistory(3240.0);
-stock.addPriceToHistory(3235.0);
-stock.addPriceToHistory(3225.0);
-stock.addPriceToHistory(3215.0);
-stock.addPriceToHistory(3225.0);
-stock.addPriceToHistory(3235.0);
-stock.addPriceToHistory(3245.0);
-stock.addPriceToHistory(3255.0);
-stock.addPriceToHistory(3265.0);
-stock.addPriceToHistory(3280.0);
-stock.addPriceToHistory(3290.0);
-stock.addPriceToHistory(3305.0);
-stock.addPriceToHistory(3315.0);
-stock.addPriceToHistory(3325.0);
-stock.addPriceToHistory(3310.0);
-stock.addPriceToHistory(3300.0);
-stock.addPriceToHistory(3285.0);
-stock.addPriceToHistory(3275.0);
-stock.addPriceToHistory(3260.0);
-}
-else if (stock.symbol.equalsIgnoreCase("FB")) {
-stock.addPriceToHistory(265.0);
-stock.addPriceToHistory(267.0);
-stock.addPriceToHistory(269.0);
-stock.addPriceToHistory(271.0);
-stock.addPriceToHistory(273.0);
-stock.addPriceToHistory(275.0);
-stock.addPriceToHistory(278.0);
-stock.addPriceToHistory(280.0);
-stock.addPriceToHistory(282.0);
-stock.addPriceToHistory(284.0);
-stock.addPriceToHistory(283.0);
-stock.addPriceToHistory(281.0);
-stock.addPriceToHistory(279.0);
-stock.addPriceToHistory(277.0);
-stock.addPriceToHistory(275.0);
-stock.addPriceToHistory(273.0);
-stock.addPriceToHistory(272.0);
-stock.addPriceToHistory(270.0);
-stock.addPriceToHistory(269.0);
-stock.addPriceToHistory(268.0);
-stock.addPriceToHistory(267.0);
-stock.addPriceToHistory(266.0);
-stock.addPriceToHistory(268.0);
-stock.addPriceToHistory(270.0);
-stock.addPriceToHistory(272.0);
-stock.addPriceToHistory(274.0);
-stock.addPriceToHistory(276.0);
-stock.addPriceToHistory(278.0);
-stock.addPriceToHistory(280.0);
-stock.addPriceToHistory(279.0);
-}
-else if (stock.symbol.equalsIgnoreCase("TSLA"))
-{
-stock.addPriceToHistory(785.0);
-stock.addPriceToHistory(790.0);
-stock.addPriceToHistory(795.0);
-stock.addPriceToHistory(800.0);
-stock.addPriceToHistory(805.0);
-stock.addPriceToHistory(810.0);
-stock.addPriceToHistory(812.0);
-stock.addPriceToHistory(815.0);
-stock.addPriceToHistory(817.0);
-stock.addPriceToHistory(820.0);
-stock.addPriceToHistory(818.0);
-stock.addPriceToHistory(816.0);
-stock.addPriceToHistory(814.0);
-stock.addPriceToHistory(812.0);
-stock.addPriceToHistory(810.0);
-stock.addPriceToHistory(808.0);
-stock.addPriceToHistory(807.0);
-stock.addPriceToHistory(809.0);
-stock.addPriceToHistory(812.0);
-stock.addPriceToHistory(815.0);
-stock.addPriceToHistory(818.0);
-stock.addPriceToHistory(820.0);
-stock.addPriceToHistory(822.0);
-stock.addPriceToHistory(825.0);
-stock.addPriceToHistory(828.0);
-stock.addPriceToHistory(830.0);
-stock.addPriceToHistory(832.0);
-stock.addPriceToHistory(835.0);
-stock.addPriceToHistory(837.0);
-stock.addPriceToHistory(840.0);
-}
-});
-}
-static void loginMenu() {
-System.out.println("\nLogin Menu:");
-System.out.println("1. Sign Up");
-System.out.println("2. Login");
-System.out.println("3. Exit");
-System.out.print("Enter choice: ");
-int choice = sc.nextInt();
-sc.nextLine(); // Consume newline
-switch (choice) {
-case 1:
-signUp();
-break;
-case 2:
-login();
-break;
-case 3:
-System.out.println("Exiting...");
-System.exit(0);
-break;
-default:
-System.out.println("Invalid choice! Try again.");
-break;
-}
-}
-static void signUp() {
-System.out.print("Enter your name: ");
-String name = sc.nextLine();
-if (!name.matches("[a-zA-Z ]+")) {
-System.out.println("Error: Name should contain only letters and spaces (no digits or special characters allowed). Please try again.");
-return;
-}
-System.out.print("Enter 4 digit account number: ");
-String accountNo = sc.nextLine();
-if (!accountNo.matches("\\d{4}")) {
-System.out.println("Error: Account number must be a 4-digit numeric code. Please try again.");
-return;
-}
-System.out.print("Create User ID: ");
-String userId = sc.nextLine();
-System.out.print("Create Password: ");
-String password = sc.nextLine();
-System.out.print("Enter initial cash balance: ");
-double cashBalance = sc.nextDouble();
-User newUser = new User(name, accountNo, userId, 
-password, cashBalance);
-users.add(newUser);
-System.out.println("Account created successfully! Please log in.");
-}
-static void login() {
-System.out.print("Enter User ID: ");
-String userId = sc.nextLine();
-System.out.print("Enter Password: ");
-String password = sc.nextLine();
-for (User user : users) {
-if (user.userId.equals(userId) && 
-user.password.equals(password)) {
-loggedInUser = user;
-System.out.println("Login successful!");
-return;
-}
-}
-System.out.println("Invalid credentials! Please try again.");
-}
-static void userMenu() {
-System.out.println("\n-----------------------User Menu-----------------------");
-System.out.println("1. View Stock Data");
-System.out.println("2. Buy Stock");
-System.out.println("3. Sell Stock");
-System.out.println("4. View Portfolio");
-System.out.println("5. View Stock Moving Averages (Crossover Strategy)");
-System.out.println("6. Sort by percent change");
-System.out.println("7. Log Out");
-System.out.print("Enter choice: ");
-int choice = sc.nextInt();
-sc.nextLine(); // Consume newline
-switch (choice) {
-case 1:
-displayAllStocks();
-break;
-case 2:
-buyStock();
-break;
-case 3:
-sellStock();
-break;
-case 4:
-displayPortfolio();
-break;
-case 5:
-viewStockMovingAverages();
-break;
-case 7:
-loggedInUser = null;
-System.out.println("Logged out successfully!");
-break;
-case 6:
-sortStocksByChangePercent();
-break;
-default:
-System.out.println("Invalid choice! Try again.");
-break;
-}
-}
-static void displayAllStocks() {
-System.out.printf("%-10s %-10s %-10s %-10s%n", 
-"Name", "Symbol", "Price", "Change %");
-for (Stock stock : stockQueue) {
-System.out.printf("%-10s %-10s %-10.2f %-10.2f%n", 
-stock.name, stock.symbol, stock.price, 
-stock.changePercent);
-}
-}
-static void sortStocksByChangePercent() {
-List<Stock> stockList = new ArrayList<>(stockQueue);
-stockList.sort(Comparator.comparingDouble(stock -> stock.changePercent));
-stockQueue = new LinkedList<>(stockList);
-System.out.println("The sorted list of stocks in ascending order by change percent");
-for (Stock stock : stockQueue) {
-System.out.println(stock.name + " (" + stock.symbol + 
-") - Price: ₹" + stock.price + ", Change: " + 
-stock.changePercent + "%");
-}
-}
-static void buyStock() {
-System.out.print("Enter stock name to buy: ");
-String stockName = sc.nextLine();
-Stock stock = findStockByName(stockName);
-if (stock != null) {
-System.out.printf("Current Price: ₹%.2f%n", 
-stock.price);
-System.out.print("Do you want to buy this stock? (yes/no): ");
-String confirmation = sc.nextLine().toLowerCase();
-if (confirmation.equals("yes")) {
-int quantity = 0;
-boolean validQuantity = false;
-// Keep asking for quantity until valid input is provided
-while (!validQuantity) {
-System.out.print("Enter quantity: ");
-try {
-quantity = sc.nextInt();
-if (quantity <= 0) {
-System.out.println("Quantity must be a positive number.");
-} else {
-validQuantity = true;
-}
-} catch (InputMismatchException e) {
-System.out.println("Invalid input! Please enter a valid integer for quantity.");
-sc.nextLine(); // Clear the buffer
-}
-}
-double totalCost = quantity * stock.price;
-if (totalCost <= loggedInUser.cashBalance) {
-loggedInUser.cashBalance -= totalCost;
-loggedInUser.totalInvested += totalCost;
-loggedInUser.portfolio.put(stock.symbol, 
-loggedInUser.portfolio.getOrDefault(stock.symbol, 0) 
-+ quantity);
-System.out.printf("Bought %d shares of %s for ₹%.2f%n", quantity, stock.name, totalCost);
-} else {
-System.out.println("Insufficient balance.");
-}
-} else {
-System.out.println("Purchase cancelled.");
-}
-} else {
-System.out.println("Stock not found.");
-}
-}
-static Stock findStockByName(String name) {
-for (Stock stock : stockQueue) {
-if (stock.name.equalsIgnoreCase(name)) {
-return stock;
-}
-}
-return null;
-}
-// Method to display the portfolio of the logged-in user
-static void displayPortfolio() {
-// Ensure loggedInUser is not null
-if (loggedInUser == null) {
-System.out.println("No user logged in.");
-return;
-}
-System.out.printf("Cash Balance: ₹%.2f%n", 
-loggedInUser.cashBalance);
-System.out.printf("Total Invested: ₹%.2f%n", 
-loggedInUser.totalInvested); // Ensure totalInvested is properly tracked
-System.out.println("Portfolio:");
-System.out.printf("%-10s %-10s %-10s%n", "Name", 
-"Quantity", "Value");
-// Loop through the portfolio and print each stock's details
-for (Map.Entry<String, Integer> entry : 
-loggedInUser.portfolio.entrySet()) {
-String stockSymbol = entry.getKey();
-int quantity = entry.getValue();
-Stock stock = findStockBySymbol(stockSymbol); // Find stock by symbol
-if (stock != null) {
-double value = quantity * stock.price; // Calculate the total value of the stock owned
-System.out.printf("%-10s %-10d %-10.2f%n", stock.name, quantity, value);
-}
-}
-}
-static Stock findStockBySymbol(String symbol) {
-for (Stock stock : stockQueue) {
-if (stock.symbol.equalsIgnoreCase(symbol)) {
-return stock;
-}
-}
-return null;
-}
-static void sellStock() {
-System.out.print("Enter stock name to sell: ");
-String stockName = sc.nextLine();
-Stock stock = findStockByName(stockName);
-if (stock != null) {
-if
-(!loggedInUser.portfolio.containsKey(stock.symbol)) {
-System.out.println("You do not own any shares of " + stock.name);
-return;
-}
-int quantityOwned = 
-loggedInUser.portfolio.get(stock.symbol);
-System.out.printf("You own %d shares of %s.%n", quantityOwned, stock.name);
-int quantityToSell = 0;
-boolean validQuantity = false;
-// Keep asking for quantity until valid input is provided
-while (!validQuantity) {
-System.out.print("Enter quantity to sell: ");
-try {
-quantityToSell = sc.nextInt();
-sc.nextLine(); // Consume newline
-if (quantityToSell <= 0) {
-System.out.println("Quantity must be a positive number.");
-} else if (quantityToSell > quantityOwned) {
-System.out.println("You don't have enough shares to sell.");
-} else {
-validQuantity = true; // Valid quantity entered
-}
-} catch (InputMismatchException e) {
-System.out.println("Invalid input! Please enter a valid integer for quantity.");
-sc.nextLine(); // Clear the buffer
-}
-}
-// Proceed with selling the stock after valid input
-double earnings = quantityToSell * stock.price;
-loggedInUser.cashBalance += earnings;
-loggedInUser.totalInvested -= earnings;
-loggedInUser.portfolio.put(stock.symbol, 
-quantityOwned - quantityToSell);
-if (loggedInUser.portfolio.get(stock.symbol) == 0) {
-loggedInUser.portfolio.remove(stock.symbol);
-}
-System.out.printf("Sold %d shares of %s for ₹%.2f%n", 
-quantityToSell, stock.name, earnings);
-} else {
-System.out.println("Stock not found.");
-}
-}
-// Method to view moving averages for each stock
-static void viewStockMovingAverages() 
-{
-System.out.print("Enter stock name to view moving averages: ");
-String stockName = sc.nextLine();
-Stock stock = findStockByName(stockName);
-if (stock != null) {
-System.out.print("Enter the short-term period (e.g., 5): ");
-int shortTerm = sc.nextInt();
-System.out.print("Enter the long-term period (e.g., 10): ");
-int longTerm = sc.nextInt();
-sc.nextLine(); // Consume newline
-double shortTermSMA = stock.calculateSMA(shortTerm);
-double longTermSMA = stock.calculateSMA(longTerm);
-System.out.printf("Short-term SMA (%d-day): ₹%.2f%n", 
-shortTerm, shortTermSMA);
-System.out.printf("Long-term SMA (%d-day): ₹%.2f%n", 
-longTerm, longTermSMA);
-// Example crossover strategy indication
-if (shortTermSMA > longTermSMA) {
-System.out.println("The recent average price is higher than the long-term average - a bullish indicator.");
-System.out.println("It is a good sign for the stock’s growth.So buy the stocks.");
-} else {
-System.out.println("The average stock price over a short period is lower than the average over a longer period- a bearish indicator.");
-System.out.println("It often suggests the stock might go down.Sell the stocks");
-}
-} else {
-System.out.println("Stock not found.");
-}
-}
+
+
+class StockManagement {
+    private static final String API_KEY = "R4IKWVAOVDEPDGBQ";
+
+    public static Map<String, Double> fetchDailyPrices(String symbol) {
+        Map<String, Double> dateToPrice = new TreeMap<>(Collections.reverseOrder());
+
+        try {
+            String urlStr = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol="
+                    + symbol.trim() + "&apikey=" + API_KEY ;
+
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) response.append(line);
+            in.close();
+
+            JSONObject json = new JSONObject(response.toString());
+
+            if (!json.has("Time Series (Daily)")) {
+                System.out.println("API limit reached or invalid symbol.");
+                return null;
+            }
+
+            JSONObject timeSeries = json.getJSONObject("Time Series (Daily)");
+            for (String date : timeSeries.keySet()) {
+                JSONObject dayData = timeSeries.getJSONObject(date);
+                double closePrice = Double.parseDouble(dayData.getString("4. close"));
+                dateToPrice.put(date, closePrice);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return dateToPrice;
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter stock symbol (e.g., AAPL): ");
+        String symbol = sc.nextLine().toUpperCase();
+
+        Stock stock = new Stock(symbol);
+        Map<String, Double> prices = fetchDailyPrices(symbol);
+
+        if (prices == null) {
+            System.out.println("Could not fetch prices.");
+            return;
+        }
+
+        stock.setDailyPrices(prices);
+
+        while (true) {
+            System.out.println("\n📌 MENU");
+            System.out.println("1. Display All Prices");
+            System.out.println("2. Calculate Simple Moving Average");
+            System.out.println("3. Get Top K Closing Prices");
+            System.out.println("4. Get Price on a Specific Date");
+            System.out.println("5. Analyze Best Buy/Sell Strategy (Greedy)");
+            System.out.println("6. Exit");
+            System.out.print("Choose an option: ");
+
+            int choice = sc.nextInt();
+
+            switch (choice) {
+                case 1:
+                    stock.displayPrices();
+                    break;
+
+                case 2:
+                    System.out.print("Enter SMA period: ");
+                    int period = sc.nextInt();
+                    List<Double> sma = stock.calculateSimpleMovingAverage(period);
+                    for (int i = 0; i < sma.size(); i++) {
+                        System.out.printf("SMA #%d: %.2f\n", i + 1, sma.get(i));
+                    }
+                    break;
+
+                case 3:
+                    System.out.print("Enter value of K: ");
+                    int k = sc.nextInt();
+                    List<Double> topPrices = stock.getTopKClosingPrices(k);
+                    System.out.println("Top " + k + " Closing Prices:");
+                    for (double p : topPrices) System.out.println("$" + p);
+                    break;
+
+                case 4:
+                    System.out.print("Enter date (YYYY-MM-DD): ");
+                    sc.nextLine(); // clear newline
+                    String date = sc.nextLine();
+                    if (prices.containsKey(date)) {
+                        System.out.println("Price on " + date + " = $" + prices.get(date));
+                    } else {
+                        System.out.println("No data for that date.");
+                    }
+                    break;
+
+                case 5:
+                    stock.bestDayToBuyAndSell();
+                    break;
+
+                case 6:
+                    System.out.println("Exiting... goodbye!");
+                    sc.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid choice.");
+            }
+        }
+    }
 }
